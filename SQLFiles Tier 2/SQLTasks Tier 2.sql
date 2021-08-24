@@ -78,18 +78,53 @@ ORDER BY joindate DESC;
 Include in your output the name of the court, and the name of the member
 formatted as a single column. Ensure no duplicate data, and order by
 the member name. */
-
+SELECT DISTINCT CONCAT(m.surname, ' ', m.firstname) AS MemberName, f.name
+FROM Members as m
+INNER JOIN Bookings as b
+USING(memid)
+INNER JOIN Facilities as f
+USING(facid)
+WHERE f.name LIKE 'Tennis%'
+ORDER BY MemberName;
 
 /* Q8: Produce a list of bookings on the day of 2012-09-14 which
 will cost the member (or guest) more than $30. Remember that guests have
 different costs to members (the listed costs are per half-hour 'slot'), and
 the guest user's ID is always 0. Include in your output the name of the
-facility, the name of the member formatted as a single column, and the cost.
-Order by descending cost, and do not use any subqueries. */
-
+facility, the name of the member formatted as a single column, and the cost. ORder by descending cost, and do not use any subqueries.*/
+SELECT DISTINCT CONCAT(m.surname, ' ', m.firstname) AS Member, f.name AS Facility,
+	CASE WHEN m.memid = 0
+		THEN f.guestcost * b.slots
+		ELSE f.membercost * b.slots END AS Cost
+FROM Members as m
+INNER JOIN Bookings as b
+USING(memid)
+INNER JOIN Facilities as f
+USING(facid)
+WHERE b.starttime >= '2012-09-14' AND
+	b.starttime < '2012-09-15' AND
+	((m.memid = 0 AND f.guestcost * b.slots > 30) OR
+	(m.memid != 0 AND f.membercost * b.slots > 30))
+ORDER BY Cost DESC;
 
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
-
+SELECT Member, Facility, Cost
+FROM(
+	SELECT DISTINCT CONCAT(m.surname, ' ', m.firstname) AS Member, f.name AS Facility,
+		CASE WHEN m.memid = 0
+			THEN f.guestcost * b.slots
+			ELSE f.membercost * b.slots END AS Cost
+	FROM Members as m
+	INNER JOIN Bookings as b
+	USING(memid)
+	INNER JOIN Facilities as f
+	USING(facid)
+	WHERE b.starttime >= '2012-09-14' AND
+		b.starttime < '2012-09-15' AND
+		((m.memid = 0 AND f.guestcost * b.slots > 30) OR
+		(m.memid != 0 AND f.membercost * b.slots > 30))
+    ) AS Booking
+ORDER BY Cost DESC;
 
 /* PART 2: SQLite
 
